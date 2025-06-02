@@ -1,0 +1,76 @@
+gradle-wrapper.jar
+/.gradle
+/captures/
+/gradlew
+/gradlew.bat
+/local.properties
+GeneratedPluginRegistrant.java
+.cxx/
+
+# Remember to never publicly share your keystore.
+# See https://flutter.dev/to/reference-keystore
+key.properties
+**/*.keystore
+**/*.jks
+
+# Flutter 기본
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+
+# Dart 패키지
+.packages
+.pub/
+
+# 의존성 lock 파일 (필요에 따라)
+# pubspec.lock  ← 팀 프로젝트에서는 유지 권장
+
+# Firebase 관련 (절대 푸시 금지)
+firebase_options.dart
+firebase.json
+.env
+*.env
+
+# Android 관련
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/key.properties
+**/*.jks
+**/*.keystore
+android/app/google-services.json
+
+# iOS/macOS 관련
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/Runner.xcworkspace/
+*.xcworkspace
+*.xcuserstate
+*.xcuserdatad
+DerivedData/
+
+# Web 관련
+web/.dart_tool/
+
+# Windows/Linux
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# IDE 관련
+.vscode/
+.idea/
+*.iml
+
+# 기타 OS/툴 관련
+*.log
+*.tmp
+*.DS_Store
