@@ -58,12 +58,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: const Text('설정', style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text('설정', style: TextStyle(color: AppColors.textPrimary, fontSize: 20)),
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
         actions: [
           TextButton(
             onPressed: _saveSettings,
-            child: const Text('저장', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+            child: const Text('저장', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16)),
           ),
         ],
       ),
@@ -114,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Icon(Icons.notifications_outlined, color: AppColors.primary, size: 20),
                       SizedBox(width: 10),
-                      Text('푸시 알림', style: TextStyle(color: AppColors.textPrimary, fontSize: 15)),
+                      Text('푸시 알림', style: TextStyle(color: AppColors.textPrimary, fontSize: 17)),
                     ],
                   ),
                   Switch(
@@ -188,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         }
                       },
                       icon: const Icon(Icons.science_outlined, color: AppColors.accent),
-                      label: const Text('테스트 데이터 전송', style: TextStyle(color: AppColors.accent)),
+                      label: const Text('테스트 데이터 전송', style: TextStyle(color: AppColors.accent, fontSize: 16)),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.accent),
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -206,9 +206,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Center(
             child: Column(
               children: const [
-                Text('CodeAir v1.0.0', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text('CodeAir v1.0.0', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                 SizedBox(height: 4),
-                Text('IoT 공기질 모니터링 대시보드', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                Text('IoT 공기질 모니터링 대시보드', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               ],
             ),
           ),
@@ -235,7 +235,7 @@ class _SectionHeader extends StatelessWidget {
       title,
       style: const TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 13,
+        fontSize: 15,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
       ),
@@ -288,7 +288,7 @@ class _ThresholdSlider extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+            Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
@@ -297,7 +297,7 @@ class _ThresholdSlider extends StatelessWidget {
               ),
               child: Text(
                 '${value.toStringAsFixed(0)} $unit',
-                style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ),
           ],
@@ -338,7 +338,7 @@ class _StandardRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -347,23 +347,31 @@ class _StandardRow extends StatelessWidget {
             _chip('보통 $moderate', AppColors.moderate),
             const SizedBox(width: 6),
             _chip('나쁨 $bad', AppColors.bad),
+            const SizedBox(width: 6),
+            _chip('매우나쁨 $veryBad $unit', AppColors.veryBad),
           ],
         ),
-        const SizedBox(height: 4),
-        _chip('매우나쁨 $veryBad $unit', AppColors.veryBad),
       ],
     );
   }
 
   Widget _chip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(color: color, fontSize: 13),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
-      child: Text(text, style: TextStyle(color: color, fontSize: 11)),
     );
   }
 }
