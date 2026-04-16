@@ -118,12 +118,12 @@ class _AlertCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: alert.isRead
               ? AppColors.cardBackground
-              : _severityColor.withOpacity(0.08),
+              : _severityColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: alert.isRead
                 ? Colors.white10
-                : _severityColor.withOpacity(0.35),
+                : _severityColor.withValues(alpha: 0.35),
           ),
         ),
         child: Row(
@@ -132,7 +132,7 @@ class _AlertCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _severityColor.withOpacity(0.15),
+                color: _severityColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(_typeIcon, color: _severityColor, size: 20),
@@ -147,7 +147,7 @@ class _AlertCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: _severityColor.withOpacity(0.15),
+                          color: _severityColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

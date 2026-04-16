@@ -292,7 +292,7 @@ class _ThresholdSlider extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -308,7 +308,7 @@ class _ThresholdSlider extends StatelessWidget {
           max: max,
           divisions: ((max - min) / 5).toInt(),
           activeColor: color,
-          inactiveColor: color.withOpacity(0.2),
+          inactiveColor: color.withValues(alpha: 0.2),
           onChanged: onChanged,
         ),
       ],
@@ -359,9 +359,9 @@ class _StandardRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 11)),
     );

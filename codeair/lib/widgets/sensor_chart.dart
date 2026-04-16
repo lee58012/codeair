@@ -116,7 +116,7 @@ class _SensorLineChartState extends State<SensorLineChart> {
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected ? m.color.withOpacity(0.2) : Colors.transparent,
+                        color: isSelected ? m.color.withValues(alpha: 0.2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected ? m.color : Colors.white24,
@@ -222,8 +222,8 @@ class _SensorLineChartState extends State<SensorLineChart> {
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            _metricColor.withOpacity(0.25),
-                            _metricColor.withOpacity(0.0),
+                            _metricColor.withValues(alpha: 0.25),
+                            _metricColor.withValues(alpha: 0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,

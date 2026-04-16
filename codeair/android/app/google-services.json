@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1063160680312",
+    "project_id": "codeair-598fd",
+    "storage_bucket": "codeair-598fd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1063160680312:android:5b6bd81f09fcc070d9c28d",
+        "android_client_info": {
+          "package_name": "com.codeair.codeair"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfTYlh90ClHMWNST9pUHC7wM-u3ug9T04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

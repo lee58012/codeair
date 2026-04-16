@@ -31,12 +31,12 @@ class SensorCard extends StatelessWidget {
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasAlert ? AppColors.danger.withOpacity(0.6) : accentColor.withOpacity(0.2),
+          color: hasAlert ? AppColors.danger.withValues(alpha: 0.6) : accentColor.withValues(alpha: 0.2),
           width: hasAlert ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.08),
+            color: accentColor.withValues(alpha:0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -54,7 +54,7 @@ class SensorCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.15),
+                      color: accentColor.withValues(alpha:0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(icon, color: accentColor, size: 18),
@@ -74,7 +74,7 @@ class SensorCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.danger.withOpacity(0.15),
+                    color: AppColors.danger.withValues(alpha:0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -124,7 +124,7 @@ class SensorCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.15),
+              color: statusColor.withValues(alpha:0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
