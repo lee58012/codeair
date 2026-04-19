@@ -60,7 +60,7 @@ class AirChart extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              '$title History'.toUpperCase(),
+              '$title History',
               style: const TextStyle(
                 color: AppColors.textMuted,
                 fontSize: 11,

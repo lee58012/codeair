@@ -52,7 +52,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         return Container(
           height: 70,
-          color: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -76,7 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     TextSpan(
-                      text: '  | v2.0',
+                      text: '  | v1.0',
                       style: TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 16,
@@ -348,38 +347,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final cards = [
       SensorCard(
-        title: 'PM 2.5',
+        title: '초미세먼지 (PM2.5)',
         value: data.pm25,
         unit: 'µg/m³',
         accentColor: AppColors.pm25Color,
-        icon: Icons.blur_on,
+        icon: Icons.air,
         isExceeded: data.pm25Level == AirQualityLevel.bad ||
             data.pm25Level == AirQualityLevel.veryBad,
       ),
       SensorCard(
-        title: 'PM 10',
+        title: '미세먼지 (PM10)',
         value: data.pm10,
         unit: 'µg/m³',
         accentColor: AppColors.pm10Color,
-        icon: Icons.grain,
+        icon: Icons.foggy,
         isExceeded: data.pm10Level == AirQualityLevel.bad ||
             data.pm10Level == AirQualityLevel.veryBad,
       ),
       SensorCard(
-        title: 'Temperature',
+        title: '온도 (Temperature)',
         value: data.temperature,
         unit: '°C',
         accentColor: AppColors.tempColor,
         icon: Icons.thermostat,
-        isExceeded: data.temperatureLevel == TemperatureLevel.hot,
+        isExceeded: data.temperatureLevel == TemperatureLevel.hot ||
+            data.temperatureLevel == TemperatureLevel.cold,
+        statusLabel: _tempStatusLabel(data.temperatureLevel),
+        statusColor: _tempStatusColor(data.temperatureLevel),
       ),
       SensorCard(
-        title: 'Humidity',
+        title: '습도 (Humidity)',
         value: data.humidity,
         unit: '%',
         accentColor: AppColors.humidityColor,
         icon: Icons.water_drop_outlined,
-        isExceeded: data.humidityLevel == HumidityLevel.humid,
+        isExceeded: data.humidityLevel == HumidityLevel.humid ||
+            data.humidityLevel == HumidityLevel.dry,
+        statusLabel: _humidityStatusLabel(data.humidityLevel),
+        statusColor: _humidityStatusColor(data.humidityLevel),
       ),
     ];
 
@@ -441,7 +446,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Row(
           children: [
-            const Icon(Icons.refresh, color: AppColors.pm25Color, size: 20),
+            GestureDetector(
+              onTap: () => provider.sendDummyData(),
+              child: const Icon(Icons.refresh, color: AppColors.pm25Color, size: 20),
+            ),
             const SizedBox(width: 8),
             const Text(
               'Live Data Trends',
@@ -467,25 +475,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               history: provider.history,
               metric: 'pm25',
               color: AppColors.pm25Color,
-              title: 'PM 2.5',
+              title: '초미세먼지',
             ),
             AirChart(
               history: provider.history,
               metric: 'pm10',
               color: AppColors.pm10Color,
-              title: 'PM 10',
+              title: '미세먼지',
             ),
             AirChart(
               history: provider.history,
               metric: 'temperature',
               color: AppColors.tempColor,
-              title: 'Temp',
+              title: '온도',
             ),
             AirChart(
               history: provider.history,
               metric: 'humidity',
               color: AppColors.humidityColor,
-              title: 'Humidity',
+              title: '습도',
             ),
           ],
         ),
@@ -560,6 +568,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ],
     );
+  }
+
+  // ─────────────────────────────────────────────
+  // 온도 상태 라벨 / 색상
+  // ─────────────────────────────────────────────
+  String _tempStatusLabel(TemperatureLevel level) {
+    switch (level) {
+      case TemperatureLevel.cold:        return '저온경보';
+      case TemperatureLevel.cool:        return '서늘함';
+      case TemperatureLevel.comfortable: return '좋음';
+      case TemperatureLevel.warm:        return '따뜻함';
+      case TemperatureLevel.hot:         return '고온경보';
+    }
+  }
+
+  Color _tempStatusColor(TemperatureLevel level) {
+    switch (level) {
+      case TemperatureLevel.cold:        return const Color(0xFF3B82F6); // blue
+      case TemperatureLevel.cool:        return AppColors.textMuted;
+      case TemperatureLevel.comfortable: return AppColors.success;
+      case TemperatureLevel.warm:        return AppColors.warning;
+      case TemperatureLevel.hot:         return AppColors.danger;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // 습도 상태 라벨 / 색상
+  // ─────────────────────────────────────────────
+  String _humidityStatusLabel(HumidityLevel level) {
+    switch (level) {
+      case HumidityLevel.dry:         return '건조함';
+      case HumidityLevel.comfortable: return '좋음';
+      case HumidityLevel.humid:       return '습함';
+    }
+  }
+
+  Color _humidityStatusColor(HumidityLevel level) {
+    switch (level) {
+      case HumidityLevel.dry:         return AppColors.warning;
+      case HumidityLevel.comfortable: return AppColors.success;
+      case HumidityLevel.humid:       return const Color(0xFF3B82F6); // blue
+    }
   }
 
   // ─────────────────────────────────────────────

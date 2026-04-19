@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sensor_data.dart';
 import '../services/sensor_service.dart';
 import '../services/alert_service.dart';
@@ -14,6 +15,10 @@ class SensorProvider extends ChangeNotifier {
   String _error = '';
   String _deviceId = 'device_001';
 
+  // SharedPreferences에서 로드된 임계값
+  double pm25Threshold = AlertService.pm25WarningThreshold;
+  double pm10Threshold = AlertService.pm10WarningThreshold;
+
   StreamSubscription? _latestSubscription;
   StreamSubscription? _historySubscription;
 
@@ -23,9 +28,27 @@ class SensorProvider extends ChangeNotifier {
   String get error => _error;
   String get deviceId => _deviceId;
 
-  void initialize(String deviceId) {
+  Future<void> initialize(String deviceId) async {
     _deviceId = deviceId;
+    await _loadThresholds();
     _startListening();
+  }
+
+  /// SharedPreferences에서 저장된 임계값 로드
+  Future<void> _loadThresholds() async {
+    final prefs = await SharedPreferences.getInstance();
+    pm25Threshold = prefs.getDouble('pm25Threshold') ?? AlertService.pm25WarningThreshold;
+    pm10Threshold = prefs.getDouble('pm10Threshold') ?? AlertService.pm10WarningThreshold;
+  }
+
+  /// 설정 화면에서 저장 시 호출 — 즉시 반영
+  Future<void> updateThresholds(double pm25, double pm10) async {
+    pm25Threshold = pm25;
+    pm10Threshold = pm10;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('pm25Threshold', pm25);
+    await prefs.setDouble('pm10Threshold', pm10);
+    notifyListeners();
   }
 
   void _startListening() {
@@ -42,9 +65,13 @@ class SensorProvider extends ChangeNotifier {
       _isLoading = false;
       _error = '';
 
-      // 경보 체크
+      // 경보 체크 — 현재 임계값 전달
       if (data != null) {
-        await _alertService.checkAndCreateAlerts(data);
+        await _alertService.checkAndCreateAlerts(
+          data,
+          pm25Threshold: pm25Threshold,
+          pm10Threshold: pm10Threshold,
+        );
       }
 
       notifyListeners();
@@ -54,9 +81,7 @@ class SensorProvider extends ChangeNotifier {
       notifyListeners();
     });
 
-    _historySubscription = _sensorService
-        .historyStream(_deviceId)
-        .listen((data) {
+    _historySubscription = _sensorService.historyStream(_deviceId).listen((data) {
       _history = data;
       notifyListeners();
     });

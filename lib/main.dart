@@ -37,7 +37,11 @@ class CodeAirApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => SensorProvider()..initialize('device_001'),
+          create: (_) {
+            final provider = SensorProvider();
+            provider.initialize('device_001');
+            return provider;
+          },
         ),
         ChangeNotifierProvider(
           create: (_) => AlertProvider()..initialize(),

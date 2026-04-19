@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/sensor_data.dart';
 
@@ -55,12 +56,13 @@ class SensorService {
 
   /// 테스트용 더미 데이터 전송
   Future<void> pushDummyData(String deviceId) async {
+    final rng = Random();
     final now = DateTime.now();
     final data = {
-      'pm25': 23.5,
-      'pm10': 45.0,
-      'temperature': 24.3,
-      'humidity': 55.0,
+      'pm25':        double.parse((rng.nextDouble() * 90).toStringAsFixed(1)),        // 0 ~ 90
+      'pm10':        double.parse((rng.nextDouble() * 170).toStringAsFixed(1)),       // 0 ~ 170
+      'temperature': double.parse((-10 + rng.nextDouble() * 48).toStringAsFixed(1)), // -10 ~ 38
+      'humidity':    double.parse((30 + rng.nextDouble() * 40).toStringAsFixed(1)),   // 30 ~ 70
       'timestamp': now.millisecondsSinceEpoch,
       'deviceId': deviceId,
     };

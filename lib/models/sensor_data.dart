@@ -69,7 +69,7 @@ class SensorData {
 
   /// 습도 상태
   HumidityLevel get humidityLevel {
-    if (humidity < 30) return HumidityLevel.dry;
+    if (humidity < 40) return HumidityLevel.dry;
     if (humidity <= 60) return HumidityLevel.comfortable;
     return HumidityLevel.humid;
   }

@@ -16,11 +16,25 @@ class AlertService {
   static const double humidityLowWarning = 20.0;
 
   /// 센서 데이터 분석 후 경보 생성
-  Future<void> checkAndCreateAlerts(SensorData data) async {
+  /// [pm25Threshold], [pm10Threshold]: 설정에서 저장된 사용자 임계값 (미지정 시 기본값 사용)
+  Future<void> checkAndCreateAlerts(
+    SensorData data, {
+    double? pm25Threshold,
+    double? pm10Threshold,
+  }) async {
+    final double p25Warn = pm25Threshold ?? pm25WarningThreshold;
+    final double p25Danger = (pm25Threshold != null)
+        ? pm25Threshold * 2.0   // 경보 기준의 2배를 위험 수준으로 설정
+        : pm25DangerThreshold;
+    final double p10Warn = pm10Threshold ?? pm10WarningThreshold;
+    final double p10Danger = (pm10Threshold != null)
+        ? pm10Threshold * 1.875 // 80→150 비율 유지
+        : pm10DangerThreshold;
+
     final List<AlertModel> alerts = [];
 
     // PM2.5 체크
-    if (data.pm25 >= pm25DangerThreshold) {
+    if (data.pm25 >= p25Danger) {
       alerts.add(_createAlert(
         type: AlertType.pm25,
         severity: AlertSeverity.danger,
@@ -28,7 +42,7 @@ class AlertService {
         message: '초미세먼지(PM2.5) 위험 수준: ${data.pm25.toStringAsFixed(1)} µg/m³',
         deviceId: data.deviceId,
       ));
-    } else if (data.pm25 >= pm25WarningThreshold) {
+    } else if (data.pm25 >= p25Warn) {
       alerts.add(_createAlert(
         type: AlertType.pm25,
         severity: AlertSeverity.warning,
@@ -39,7 +53,7 @@ class AlertService {
     }
 
     // PM10 체크
-    if (data.pm10 >= pm10DangerThreshold) {
+    if (data.pm10 >= p10Danger) {
       alerts.add(_createAlert(
         type: AlertType.pm10,
         severity: AlertSeverity.danger,
@@ -47,7 +61,7 @@ class AlertService {
         message: '미세먼지(PM10) 위험 수준: ${data.pm10.toStringAsFixed(1)} µg/m³',
         deviceId: data.deviceId,
       ));
-    } else if (data.pm10 >= pm10WarningThreshold) {
+    } else if (data.pm10 >= p10Warn) {
       alerts.add(_createAlert(
         type: AlertType.pm10,
         severity: AlertSeverity.warning,

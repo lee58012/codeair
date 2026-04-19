@@ -41,8 +41,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setDouble('pm10Threshold', _pm10Threshold);
     await prefs.setBool('notificationsEnabled', _notificationsEnabled);
 
+    if (!mounted) return;
+    final provider = context.read<SensorProvider>();
+    provider.changeDevice(_deviceIdController.text);
+    // 임계값 즉시 반영
+    await provider.updateThresholds(_pm25Threshold, _pm10Threshold);
     if (mounted) {
-      context.read<SensorProvider>().changeDevice(_deviceIdController.text);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('설정이 저장되었습니다'),
