@@ -1,167 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../constants/app_colors.dart';
-import '../models/sensor_data.dart';
 
+/// 디자인 참고: code-air MetricCard
+/// 흰색 카드, 큰 숫자, 상태 dot + 텍스트
 class SensorCard extends StatelessWidget {
   final String title;
-  final String value;
+  final double value;
   final String unit;
-  final String statusLabel;
-  final Color statusColor;
   final Color accentColor;
   final IconData icon;
-  final bool hasAlert;
-  final List<SensorData> history;
-  final String metricKey; // 'pm25' | 'pm10' | 'temperature' | 'humidity'
+  final bool isExceeded;
 
   const SensorCard({
     super.key,
     required this.title,
     required this.value,
     required this.unit,
-    required this.statusLabel,
-    required this.statusColor,
     required this.accentColor,
     required this.icon,
-    required this.metricKey,
-    this.hasAlert = false,
-    this.history = const [],
+    this.isExceeded = false,
   });
-
-  double _getValue(SensorData d) {
-    switch (metricKey) {
-      case 'pm25':        return d.pm25;
-      case 'pm10':        return d.pm10;
-      case 'temperature': return d.temperature;
-      case 'humidity':    return d.humidity;
-      default:            return 0;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: hasAlert
-              ? AppColors.danger.withValues(alpha: 0.6)
-              : accentColor.withValues(alpha: 0.2),
-          width: hasAlert ? 1.5 : 1,
+          color: isExceeded
+              ? AppColors.danger.withValues(alpha: 0.4)
+              : AppColors.border,
+          width: isExceeded ? 1.5 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // ── 헤더: 아이콘 + 제목 + 경보 뱃지 ──
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                    child: Icon(icon, color: accentColor, size: 16),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              if (hasAlert)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.warning_amber_rounded,
-                          color: AppColors.danger, size: 11),
-                      SizedBox(width: 3),
-                      Text(
-                        '경보',
-                        style: TextStyle(
-                          color: AppColors.danger,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // ── 수치 + 단위 ──
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextSpan(
-                  text: ' $unit',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // ── 상태 뱃지 ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              statusLabel,
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
+          // 제목
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 10),
 
-          // ── 미니 스파크라인 차트 ──
-          _MiniSparkline(
-            history: history,
-            getValue: _getValue,
-            color: accentColor,
+          // 수치 (크게)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value.toStringAsFixed(1),
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                unit,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // 상태 dot
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isExceeded ? AppColors.danger : AppColors.success,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isExceeded ? '위험 (기준 초과)' : '좋음',
+                style: TextStyle(
+                  color: isExceeded ? AppColors.danger : AppColors.success,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -169,112 +112,44 @@ class SensorCard extends StatelessWidget {
   }
 }
 
-/// 카드 내부 소형 라인 차트 (축/레이블 없음)
-class _MiniSparkline extends StatelessWidget {
-  final List<SensorData> history;
-  final double Function(SensorData) getValue;
-  final Color color;
-
-  const _MiniSparkline({
-    required this.history,
-    required this.getValue,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (history.isEmpty) {
-      return SizedBox(
-        height: 50,
-        child: Center(
-          child: Text(
-            '데이터 없음',
-            style: TextStyle(
-              color: AppColors.textSecondary.withValues(alpha: 0.5),
-              fontSize: 10,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final spots = history.asMap().entries.map((e) {
-      return FlSpot(e.key.toDouble(), getValue(e.value));
-    }).toList();
-
-    return SizedBox(
-      height: 50,
-      child: LineChart(
-        LineChartData(
-          gridData: const FlGridData(show: false),
-          titlesData: const FlTitlesData(show: false),
-          borderData: FlBorderData(show: false),
-          lineTouchData: const LineTouchData(enabled: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: color,
-              barWidth: 2,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    color.withValues(alpha: 0.3),
-                    color.withValues(alpha: 0.0),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 로딩 중 스켈레톤 카드
 class SensorCardSkeleton extends StatelessWidget {
   const SensorCardSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            _shimmer(34, 34, radius: 9),
-            const SizedBox(width: 8),
-            _shimmer(80, 12),
-          ]),
-          const SizedBox(height: 12),
-          _shimmer(90, 28),
-          const SizedBox(height: 6),
-          _shimmer(55, 22, radius: 20),
+          _shimmer(70, 12),
           const SizedBox(height: 10),
-          _shimmer(double.infinity, 50),
+          _shimmer(110, 38),
+          const SizedBox(height: 14),
+          _shimmer(90, 14),
         ],
       ),
     );
   }
 
-  Widget _shimmer(double w, double h, {double radius = 6}) {
+  Widget _shimmer(double w, double h) {
     return Container(
-      width: w,
-      height: h,
+      width: w, height: h,
       decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(radius),
+        color: AppColors.border,
+        borderRadius: BorderRadius.circular(6),
       ),
     );
   }

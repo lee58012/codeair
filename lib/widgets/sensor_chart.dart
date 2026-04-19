@@ -4,275 +4,163 @@ import 'package:intl/intl.dart';
 import '../models/sensor_data.dart';
 import '../constants/app_colors.dart';
 
-class SensorLineChart extends StatefulWidget {
+/// 디자인 참고: code-air AirChart
+/// 흰 카드, 에어리어 차트, 그라디언트 fill
+class AirChart extends StatelessWidget {
   final List<SensorData> history;
-  final String selectedMetric; // 'pm25', 'pm10', 'temperature', 'humidity'
+  final String metric; // 'pm25' | 'pm10' | 'temperature' | 'humidity'
+  final Color color;
+  final String title;
 
-  const SensorLineChart({
+  const AirChart({
     super.key,
     required this.history,
-    this.selectedMetric = 'pm25',
+    required this.metric,
+    required this.color,
+    required this.title,
   });
 
-  @override
-  State<SensorLineChart> createState() => _SensorLineChartState();
-}
-
-class _SensorLineChartState extends State<SensorLineChart> {
-  String _selectedMetric = 'pm25';
-
-  final List<_MetricOption> _metrics = const [
-    _MetricOption('pm25', 'PM2.5', AppColors.pm25Color),
-    _MetricOption('pm10', 'PM10', AppColors.pm10Color),
-    _MetricOption('temperature', '온도', AppColors.tempColor),
-    _MetricOption('humidity', '습도', AppColors.humidityColor),
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedMetric = widget.selectedMetric;
-  }
-
   double _getValue(SensorData d) {
-    switch (_selectedMetric) {
-      case 'pm25':
-        return d.pm25;
-      case 'pm10':
-        return d.pm10;
-      case 'temperature':
-        return d.temperature;
-      case 'humidity':
-        return d.humidity;
-      default:
-        return d.pm25;
-    }
-  }
-
-  Color get _metricColor {
-    return _metrics.firstWhere((m) => m.key == _selectedMetric).color;
-  }
-
-  String get _unit {
-    switch (_selectedMetric) {
-      case 'pm25':
-      case 'pm10':
-        return 'µg/m³';
-      case 'temperature':
-        return '°C';
-      case 'humidity':
-        return '%';
-      default:
-        return '';
+    switch (metric) {
+      case 'pm25':        return d.pm25;
+      case 'pm10':        return d.pm10;
+      case 'temperature': return d.temperature;
+      case 'humidity':    return d.humidity;
+      default:            return 0;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final spots = history.asMap().entries.map((e) {
+      return FlSpot(e.key.toDouble(), _getValue(e.value));
+    }).toList();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '시간별 추이',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '$title History'.toUpperCase(),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
               ),
-              Text(
-                '최근 24회 측정',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 12),
-
-          // 메트릭 선택 탭
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _metrics.map((m) {
-                final isSelected = m.key == _selectedMetric;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedMetric = m.key),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isSelected ? m.color.withValues(alpha: 0.2) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected ? m.color : Colors.white24,
-                        ),
-                      ),
-                      child: Text(
-                        m.label,
-                        style: TextStyle(
-                          color: isSelected ? m.color : AppColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
+          SizedBox(
+            height: 140,
+            child: history.isEmpty
+                ? const Center(
+                    child: Text(
+                      '데이터 없음',
+                      style: TextStyle(color: AppColors.textLight, fontSize: 12),
                     ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 차트
-          if (widget.history.isEmpty)
-            const SizedBox(
-              height: 160,
-              child: Center(
-                child: Text(
-                  '데이터가 없습니다',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            )
-          else
-            SizedBox(
-              height: 160,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: _getInterval(),
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white10,
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                        getTitlesWidget: (v, _) => Text(
-                          v.toStringAsFixed(0),
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 28,
-                        interval: (widget.history.length / 4).ceilToDouble(),
-                        getTitlesWidget: (v, _) {
-                          final idx = v.toInt();
-                          if (idx < 0 || idx >= widget.history.length) {
-                            return const SizedBox();
-                          }
-                          return Text(
-                            DateFormat('HH:mm').format(widget.history[idx].timestamp),
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 10,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: widget.history.asMap().entries.map((e) {
-                        return FlSpot(e.key.toDouble(), _getValue(e.value));
-                      }).toList(),
-                      isCurved: true,
-                      color: _metricColor,
-                      barWidth: 2.5,
-                      dotData: FlDotData(
-                        show: widget.history.length <= 12,
-                        getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
-                          radius: 3,
-                          color: _metricColor,
-                          strokeWidth: 1.5,
-                          strokeColor: AppColors.cardBackground,
-                        ),
-                      ),
-                      belowBarData: BarAreaData(
+                  )
+                : LineChart(
+                    LineChartData(
+                      gridData: FlGridData(
                         show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            _metricColor.withValues(alpha: 0.25),
-                            _metricColor.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                        drawVerticalLine: false,
+                        horizontalInterval: _interval(),
+                        getDrawingHorizontalLine: (_) => const FlLine(
+                          color: Color(0xFFF1F5F9),
+                          strokeWidth: 1,
+                        ),
+                      ),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 36,
+                            getTitlesWidget: (v, _) => Text(
+                              v.toStringAsFixed(0),
+                              style: const TextStyle(
+                                color: AppColors.textLight,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles:    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles:  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          color: color,
+                          barWidth: 3,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                color.withValues(alpha: 0.3),
+                                color.withValues(alpha: 0.0),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ],
+                      lineTouchData: LineTouchData(
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipColor: (_) => AppColors.textDark,
+                          tooltipRoundedRadius: 8,
+                          getTooltipItems: (spots) => spots.map((s) {
+                            final idx = s.x.toInt();
+                            final time = idx < history.length
+                                ? DateFormat('HH:mm').format(history[idx].timestamp)
+                                : '';
+                            return LineTooltipItem(
+                              '$time\n${s.y.toStringAsFixed(1)}',
+                              TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                            );
+                          }).toList(),
                         ),
                       ),
                     ),
-                  ],
-                  lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppColors.surface,
-                      tooltipRoundedRadius: 8,
-                      getTooltipItems: (spots) => spots.map((s) {
-                        final idx = s.x.toInt();
-                        final time = idx < widget.history.length
-                            ? DateFormat('HH:mm').format(widget.history[idx].timestamp)
-                            : '';
-                        return LineTooltipItem(
-                          '$time\n${s.y.toStringAsFixed(1)} $_unit',
-                          TextStyle(
-                            color: _metricColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
-                      }).toList(),
-                    ),
                   ),
-                ),
-              ),
-            ),
+          ),
         ],
       ),
     );
   }
 
-  double _getInterval() {
-    if (widget.history.isEmpty) return 10;
-    final values = widget.history.map(_getValue).toList();
-    final max = values.reduce((a, b) => a > b ? a : b);
-    if (max <= 10) return 2;
-    if (max <= 50) return 10;
+  double _interval() {
+    if (history.isEmpty) return 10;
+    final vals = history.map(_getValue).toList();
+    final max = vals.reduce((a, b) => a > b ? a : b);
+    if (max <= 10)  return 2;
+    if (max <= 50)  return 10;
     if (max <= 100) return 20;
     return 50;
   }
-}
-
-class _MetricOption {
-  final String key;
-  final String label;
-  final Color color;
-  const _MetricOption(this.key, this.label, this.color);
 }

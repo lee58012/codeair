@@ -13,11 +13,11 @@ import 'constants/app_colors.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 상태바 스타일
+  // 상태바 스타일 (라이트 테마)
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -47,12 +47,19 @@ class CodeAirApp extends StatelessWidget {
         title: 'CodeAir',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.dark(
+          colorScheme: ColorScheme.light(
             primary: AppColors.primary,
-            secondary: AppColors.accent,
+            secondary: AppColors.primary,
             surface: AppColors.surface,
           ),
           scaffoldBackgroundColor: AppColors.background,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            foregroundColor: AppColors.textDark,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+          ),
           fontFamily: 'Pretendard',
           useMaterial3: true,
         ),

@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   prefixIcon: const Icon(Icons.device_hub, color: AppColors.primary),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Colors.white24),
+                    borderSide: const BorderSide(color: AppColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -124,7 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-              const Divider(color: Colors.white10, height: 24),
+              const Divider(color: AppColors.border, height: 24),
 
               // PM2.5 임계값
               _ThresholdSlider(
@@ -159,7 +159,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsCard(
             children: [
               _StandardRow(label: 'PM2.5', good: '0~15', moderate: '16~35', bad: '36~75', veryBad: '76+', unit: 'µg/m³'),
-              const Divider(color: Colors.white10, height: 20),
+              const Divider(color: AppColors.border, height: 20),
+              const Divider(color: AppColors.border, height: 20),
               _StandardRow(label: 'PM10', good: '0~30', moderate: '31~80', bad: '81~150', veryBad: '151+', unit: 'µg/m³'),
             ],
           ),
@@ -254,7 +255,7 @@ class _SettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
@@ -344,7 +345,7 @@ class _StandardRow extends StatelessWidget {
           children: [
             _chip('좋음 $good', AppColors.good),
             const SizedBox(width: 6),
-            _chip('보통 $moderate', AppColors.moderate),
+            _chip('보통 $moderate', AppColors.warning),
             const SizedBox(width: 6),
             _chip('나쁨 $bad', AppColors.bad),
             const SizedBox(width: 6),
