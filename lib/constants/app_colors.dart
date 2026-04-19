@@ -31,13 +31,6 @@ class AppColors {
 
   static const Color cardBackground = Color(0xFFFFFFFF);
 
-  // 하위 호환
-  static const Color textPrimary   = textDark;
-  static const Color textSecondary = textMuted;
-  static const Color accent        = primary;
-  static const Color good          = success;
-  static const Color bad           = danger;
-  static const Color veryBad       = danger;
 
   static Color forAirQuality(AirQualityLevel level) {
     switch (level) {

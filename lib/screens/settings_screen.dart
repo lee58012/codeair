@@ -50,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('설정이 저장되었습니다'),
-          backgroundColor: AppColors.good,
+          backgroundColor: AppColors.success,
         ),
       );
     }
@@ -62,8 +62,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
-        title: const Text('설정', style: TextStyle(color: AppColors.textPrimary, fontSize: 20)),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        title: const Text('설정', style: TextStyle(color: AppColors.textDark, fontSize: 20)),
+        iconTheme: const IconThemeData(color: AppColors.textDark),
         actions: [
           TextButton(
             onPressed: _saveSettings,
@@ -81,12 +81,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               TextField(
                 controller: _deviceIdController,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: const TextStyle(color: AppColors.textDark),
                 decoration: InputDecoration(
                   labelText: '기기 ID',
-                  labelStyle: const TextStyle(color: AppColors.textSecondary),
+                  labelStyle: const TextStyle(color: AppColors.textMuted),
                   hintText: 'device_001',
-                  hintStyle: const TextStyle(color: AppColors.textSecondary),
+                  hintStyle: const TextStyle(color: AppColors.textMuted),
                   prefixIcon: const Icon(Icons.device_hub, color: AppColors.primary),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -118,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Icon(Icons.notifications_outlined, color: AppColors.primary, size: 20),
                       SizedBox(width: 10),
-                      Text('푸시 알림', style: TextStyle(color: AppColors.textPrimary, fontSize: 17)),
+                      Text('푸시 알림', style: TextStyle(color: AppColors.textDark, fontSize: 17)),
                     ],
                   ),
                   Switch(
@@ -164,7 +164,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _StandardRow(label: 'PM2.5', good: '0~15', moderate: '16~35', bad: '36~75', veryBad: '76+', unit: 'µg/m³'),
               const Divider(color: AppColors.border, height: 20),
-              const Divider(color: AppColors.border, height: 20),
               _StandardRow(label: 'PM10', good: '0~30', moderate: '31~80', bad: '81~150', veryBad: '151+', unit: 'µg/m³'),
             ],
           ),
@@ -192,10 +191,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         }
                       },
-                      icon: const Icon(Icons.science_outlined, color: AppColors.accent),
-                      label: const Text('테스트 데이터 전송', style: TextStyle(color: AppColors.accent, fontSize: 16)),
+                      icon: const Icon(Icons.science_outlined, color: AppColors.primary),
+                      label: const Text('테스트 데이터 전송', style: TextStyle(color: AppColors.primary, fontSize: 16)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.accent),
+                        side: const BorderSide(color: AppColors.primary),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -211,9 +210,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Center(
             child: Column(
               children: const [
-                Text('CodeAir v1.0.0', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                Text('CodeAir v1.0.0', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
                 SizedBox(height: 4),
-                Text('IoT 공기질 모니터링 대시보드', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text('IoT 공기질 모니터링 대시보드', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
               ],
             ),
           ),
@@ -239,7 +238,7 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       title,
       style: const TextStyle(
-        color: AppColors.textSecondary,
+        color: AppColors.textMuted,
         fontSize: 15,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
@@ -293,7 +292,7 @@ class _ThresholdSlider extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 16)),
+            Text(label, style: const TextStyle(color: AppColors.textDark, fontSize: 16)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
@@ -343,17 +342,17 @@ class _StandardRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
+        Text(label, style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w600, fontSize: 15)),
         const SizedBox(height: 8),
         Row(
           children: [
-            _chip('좋음 $good', AppColors.good),
+            _chip('좋음 $good', AppColors.success),
             const SizedBox(width: 6),
             _chip('보통 $moderate', AppColors.warning),
             const SizedBox(width: 6),
-            _chip('나쁨 $bad', AppColors.bad),
+            _chip('나쁨 $bad', AppColors.danger),
             const SizedBox(width: 6),
-            _chip('매우나쁨 $veryBad $unit', AppColors.veryBad),
+            _chip('매우나쁨 $veryBad $unit', AppColors.danger),
           ],
         ),
       ],

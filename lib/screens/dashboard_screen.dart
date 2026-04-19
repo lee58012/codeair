@@ -286,7 +286,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   child: const Text(
-                    '© 2026 Code Air Inc. — IoT 공기질 모니터링 대시보드 v2.0',
+                    '© 2026 Code Air Inc. — IoT 공기질 모니터링 대시보드 v1.0',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.textLight,
@@ -613,65 +613,96 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─────────────────────────────────────────────
-  // Thresholds Tab (기존 SettingsScreen 간소화)
+  // Thresholds Tab — 현재 경보 기준값 표시
   // ─────────────────────────────────────────────
   Widget _buildThresholdsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'THRESHOLD SETTINGS',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-              ),
+    return Consumer<SensorProvider>(
+      builder: (context, provider, _) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              '경보 발생 기준값 설정',
-              style: TextStyle(
-                color: AppColors.textDark,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              '자세한 설정은 설정 화면에서 변경할 수 있습니다.',
-              style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/settings'),
-                icon: const Icon(Icons.settings, size: 18),
-                label: const Text('설정 화면 열기'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'THRESHOLD SETTINGS',
+                  style: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
                   ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                const Text(
+                  '현재 경보 기준값',
+                  style: TextStyle(
+                    color: AppColors.textDark,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _thresholdRow('초미세먼지 (PM2.5)', provider.pm25Threshold, 'µg/m³', AppColors.pm25Color),
+                const SizedBox(height: 12),
+                _thresholdRow('미세먼지 (PM10)', provider.pm10Threshold, 'µg/m³', AppColors.pm10Color),
+                const SizedBox(height: 12),
+                _thresholdRow('온도 고온', 33.0, '°C', AppColors.tempColor),
+                const SizedBox(height: 12),
+                _thresholdRow('온도 저온', 0.0, '°C', const Color(0xFF3B82F6)),
+                const SizedBox(height: 12),
+                _thresholdRow('습도 고습', 60.0, '%', AppColors.humidityColor),
+                const SizedBox(height: 12),
+                _thresholdRow('습도 저습', 40.0, '%', AppColors.warning),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, '/settings'),
+                    icon: const Icon(Icons.settings, size: 18),
+                    label: const Text('기준값 변경하기'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _thresholdRow(String label, double value, String unit, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            '${value.toStringAsFixed(0)} $unit',
+            style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 14),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

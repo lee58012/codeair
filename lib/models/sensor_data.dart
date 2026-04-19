@@ -74,12 +74,6 @@ class SensorData {
     return HumidityLevel.humid;
   }
 
-  /// 전체 공기질 경보 여부
-  bool get hasAlert =>
-      pm25Level == AirQualityLevel.bad ||
-      pm25Level == AirQualityLevel.veryBad ||
-      pm10Level == AirQualityLevel.bad ||
-      pm10Level == AirQualityLevel.veryBad;
 }
 
 enum AirQualityLevel { good, moderate, bad, veryBad }
