@@ -6,8 +6,8 @@ import '../providers/alert_provider.dart';
 import '../constants/app_colors.dart';
 import '../widgets/sensor_card.dart';
 import '../widgets/sensor_chart.dart';
-import '../models/sensor_data.dart';
 import '../models/alert_model.dart';
+import '../services/alert_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -345,6 +345,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       );
     }
 
+    // 설정에서 저장된 임계값 기준으로 상태 판단
+    final pm25Over  = data.pm25        >= provider.pm25Threshold;
+    final pm10Over  = data.pm10        >= provider.pm10Threshold;
+    final tempHot   = data.temperature >= AlertService.tempHighWarning;
+    final tempCold  = data.temperature <= AlertService.tempLowWarning;
+    final humidHigh = data.humidity    >  AlertService.humidityHighWarning;
+    final humidLow  = data.humidity    <  AlertService.humidityLowWarning;
+
     final cards = [
       SensorCard(
         title: '초미세먼지 (PM2.5)',
@@ -352,8 +360,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         unit: 'µg/m³',
         accentColor: AppColors.pm25Color,
         icon: Icons.air,
-        isExceeded: data.pm25Level == AirQualityLevel.bad ||
-            data.pm25Level == AirQualityLevel.veryBad,
+        isExceeded: pm25Over,
+        statusLabel: pm25Over ? '위험' : '좋음',
       ),
       SensorCard(
         title: '미세먼지 (PM10)',
@@ -361,8 +369,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         unit: 'µg/m³',
         accentColor: AppColors.pm10Color,
         icon: Icons.foggy,
-        isExceeded: data.pm10Level == AirQualityLevel.bad ||
-            data.pm10Level == AirQualityLevel.veryBad,
+        isExceeded: pm10Over,
+        statusLabel: pm10Over ? '위험' : '좋음',
       ),
       SensorCard(
         title: '온도 (Temperature)',
@@ -370,10 +378,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         unit: '°C',
         accentColor: AppColors.tempColor,
         icon: Icons.thermostat,
-        isExceeded: data.temperatureLevel == TemperatureLevel.hot ||
-            data.temperatureLevel == TemperatureLevel.cold,
-        statusLabel: _tempStatusLabel(data.temperatureLevel),
-        statusColor: _tempStatusColor(data.temperatureLevel),
+        isExceeded: tempHot || tempCold,
+        statusLabel: tempHot  ? '고온경보'
+                   : tempCold ? '저온경보'
+                   : '좋음',
+        statusColor: tempHot  ? AppColors.danger
+                   : tempCold ? const Color(0xFF3B82F6)
+                   : AppColors.success,
       ),
       SensorCard(
         title: '습도 (Humidity)',
@@ -381,10 +392,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         unit: '%',
         accentColor: AppColors.humidityColor,
         icon: Icons.water_drop_outlined,
-        isExceeded: data.humidityLevel == HumidityLevel.humid ||
-            data.humidityLevel == HumidityLevel.dry,
-        statusLabel: _humidityStatusLabel(data.humidityLevel),
-        statusColor: _humidityStatusColor(data.humidityLevel),
+        isExceeded: humidHigh || humidLow,
+        statusLabel: humidHigh ? '습함'
+                   : humidLow  ? '건조함'
+                   : '좋음',
+        statusColor: humidHigh ? const Color(0xFF3B82F6)
+                   : humidLow  ? AppColors.warning
+                   : AppColors.success,
       ),
     ];
 
@@ -571,48 +585,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─────────────────────────────────────────────
-  // 온도 상태 라벨 / 색상
-  // ─────────────────────────────────────────────
-  String _tempStatusLabel(TemperatureLevel level) {
-    switch (level) {
-      case TemperatureLevel.cold:        return '저온경보';
-      case TemperatureLevel.cool:        return '서늘함';
-      case TemperatureLevel.comfortable: return '좋음';
-      case TemperatureLevel.warm:        return '따뜻함';
-      case TemperatureLevel.hot:         return '고온경보';
-    }
-  }
-
-  Color _tempStatusColor(TemperatureLevel level) {
-    switch (level) {
-      case TemperatureLevel.cold:        return const Color(0xFF3B82F6); // blue
-      case TemperatureLevel.cool:        return AppColors.textMuted;
-      case TemperatureLevel.comfortable: return AppColors.success;
-      case TemperatureLevel.warm:        return AppColors.warning;
-      case TemperatureLevel.hot:         return AppColors.danger;
-    }
-  }
-
-  // ─────────────────────────────────────────────
-  // 습도 상태 라벨 / 색상
-  // ─────────────────────────────────────────────
-  String _humidityStatusLabel(HumidityLevel level) {
-    switch (level) {
-      case HumidityLevel.dry:         return '건조함';
-      case HumidityLevel.comfortable: return '좋음';
-      case HumidityLevel.humid:       return '습함';
-    }
-  }
-
-  Color _humidityStatusColor(HumidityLevel level) {
-    switch (level) {
-      case HumidityLevel.dry:         return AppColors.warning;
-      case HumidityLevel.comfortable: return AppColors.success;
-      case HumidityLevel.humid:       return const Color(0xFF3B82F6); // blue
-    }
-  }
-
-  // ─────────────────────────────────────────────
   // Thresholds Tab — 현재 경보 기준값 표시
   // ─────────────────────────────────────────────
   Widget _buildThresholdsTab() {
@@ -649,17 +621,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _thresholdRow('초미세먼지 (PM2.5)', provider.pm25Threshold, 'µg/m³', AppColors.pm25Color),
+                _thresholdRow('초미세먼지 (PM2.5)', provider.pm25Threshold,                'µg/m³', AppColors.pm25Color),
                 const SizedBox(height: 12),
-                _thresholdRow('미세먼지 (PM10)', provider.pm10Threshold, 'µg/m³', AppColors.pm10Color),
+                _thresholdRow('미세먼지 (PM10)',    provider.pm10Threshold,                'µg/m³', AppColors.pm10Color),
                 const SizedBox(height: 12),
-                _thresholdRow('온도 고온', 33.0, '°C', AppColors.tempColor),
+                _thresholdRow('온도 고온',           AlertService.tempHighWarning,          '°C',    AppColors.tempColor),
                 const SizedBox(height: 12),
-                _thresholdRow('온도 저온', 0.0, '°C', const Color(0xFF3B82F6)),
+                _thresholdRow('온도 저온',           AlertService.tempLowWarning,           '°C',    const Color(0xFF3B82F6)),
                 const SizedBox(height: 12),
-                _thresholdRow('습도 고습', 60.0, '%', AppColors.humidityColor),
+                _thresholdRow('습도 고습',           AlertService.humidityHighWarning,      '%',     AppColors.humidityColor),
                 const SizedBox(height: 12),
-                _thresholdRow('습도 저습', 40.0, '%', AppColors.warning),
+                _thresholdRow('습도 저습',           AlertService.humidityLowWarning,       '%',     AppColors.warning),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

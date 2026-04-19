@@ -20,8 +20,12 @@ class AlertService {
     double? pm25Threshold,
     double? pm10Threshold,
   }) async {
-    final double p25 = pm25Threshold ?? pm25WarningThreshold;
-    final double p10 = pm10Threshold ?? pm10WarningThreshold;
+    final double p25   = pm25Threshold ?? pm25WarningThreshold;
+    final double p10   = pm10Threshold ?? pm10WarningThreshold;
+    const double tHigh = tempHighWarning;
+    const double tLow  = tempLowWarning;
+    const double hHigh = humidityHighWarning;
+    const double hLow  = humidityLowWarning;
 
     final List<AlertModel> alerts = [];
 
@@ -45,38 +49,38 @@ class AlertService {
       ));
     }
 
-    if (data.temperature >= tempHighWarning) {
+    if (data.temperature >= tHigh) {
       alerts.add(_createAlert(
         type: AlertType.temperature,
         severity: AlertSeverity.warning,
         value: data.temperature,
-        message: '고온 경보: ${data.temperature.toStringAsFixed(1)} °C',
+        message: '고온 경보: ${data.temperature.toStringAsFixed(1)} °C (기준: ${tHigh.toStringAsFixed(0)}°C 이상)',
         deviceId: data.deviceId,
       ));
-    } else if (data.temperature <= tempLowWarning) {
+    } else if (data.temperature <= tLow) {
       alerts.add(_createAlert(
         type: AlertType.temperature,
         severity: AlertSeverity.warning,
         value: data.temperature,
-        message: '저온 경보: ${data.temperature.toStringAsFixed(1)} °C',
+        message: '저온 경보: ${data.temperature.toStringAsFixed(1)} °C (기준: ${tLow.toStringAsFixed(0)}°C 이하)',
         deviceId: data.deviceId,
       ));
     }
 
-    if (data.humidity > humidityHighWarning) {
+    if (data.humidity > hHigh) {
       alerts.add(_createAlert(
         type: AlertType.humidity,
         severity: AlertSeverity.warning,
         value: data.humidity,
-        message: '고습도 경보: ${data.humidity.toStringAsFixed(1)} %',
+        message: '고습도 경보: ${data.humidity.toStringAsFixed(1)} % (기준: ${hHigh.toStringAsFixed(0)}% 초과)',
         deviceId: data.deviceId,
       ));
-    } else if (data.humidity < humidityLowWarning) {
+    } else if (data.humidity < hLow) {
       alerts.add(_createAlert(
         type: AlertType.humidity,
         severity: AlertSeverity.warning,
         value: data.humidity,
-        message: '저습도 경보: ${data.humidity.toStringAsFixed(1)} %',
+        message: '저습도 경보: ${data.humidity.toStringAsFixed(1)} % (기준: ${hLow.toStringAsFixed(0)}% 미만)',
         deviceId: data.deviceId,
       ));
     }

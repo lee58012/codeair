@@ -44,16 +44,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     final provider = context.read<SensorProvider>();
     provider.changeDevice(_deviceIdController.text);
-    // 임계값 즉시 반영
     await provider.updateThresholds(_pm25Threshold, _pm10Threshold);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('설정이 저장되었습니다'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-    }
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -61,21 +53,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('설정', style: TextStyle(color: AppColors.textDark, fontSize: 20)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        title: const Text(
+          '설정',
+          style: TextStyle(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
         iconTheme: const IconThemeData(color: AppColors.textDark),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.border),
+        ),
         actions: [
           TextButton(
             onPressed: _saveSettings,
-            child: const Text('저장', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+            child: const Text(
+              '저장',
+              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 기기 설정
-          _SectionHeader(title: '기기 설정'),
+          // ── 기기 설정 ──
+          const _SectionHeader(title: '기기 설정'),
           const SizedBox(height: 12),
           _SettingsCard(
             children: [
@@ -105,12 +108,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 20),
 
-          // 알림 설정
-          _SectionHeader(title: '경보 설정'),
+          // ── 경보 설정 ──
+          const _SectionHeader(title: '경보 설정'),
           const SizedBox(height: 12),
           _SettingsCard(
             children: [
-              // 알림 토글
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -129,8 +131,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
               const Divider(color: AppColors.border, height: 24),
-
-              // PM2.5 임계값
               _ThresholdSlider(
                 label: 'PM2.5 경보 기준',
                 value: _pm25Threshold,
@@ -141,8 +141,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onChanged: (v) => setState(() => _pm25Threshold = v),
               ),
               const SizedBox(height: 16),
-
-              // PM10 임계값
               _ThresholdSlider(
                 label: 'PM10 경보 기준',
                 value: _pm10Threshold,
@@ -157,21 +155,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 20),
 
-          // 공기질 기준 안내
-          _SectionHeader(title: '공기질 기준 (국내 기준)'),
+          // ── 공기질 기준 안내 ──
+          const _SectionHeader(title: '공기질 기준 (국내 기준)'),
           const SizedBox(height: 12),
           _SettingsCard(
             children: [
-              _StandardRow(label: 'PM2.5', good: '0~15', moderate: '16~35', bad: '36~75', veryBad: '76+', unit: 'µg/m³'),
+              _StandardRow(
+                label: 'PM2.5',
+                good: '0~15',
+                moderate: '16~35',
+                bad: '36~75',
+                veryBad: '76+',
+                unit: 'µg/m³',
+              ),
               const Divider(color: AppColors.border, height: 20),
-              _StandardRow(label: 'PM10', good: '0~30', moderate: '31~80', bad: '81~150', veryBad: '151+', unit: 'µg/m³'),
+              _StandardRow(
+                label: 'PM10',
+                good: '0~30',
+                moderate: '31~80',
+                bad: '81~150',
+                veryBad: '151+',
+                unit: 'µg/m³',
+              ),
             ],
           ),
 
           const SizedBox(height: 20),
 
-          // 테스트 버튼
-          _SectionHeader(title: '개발자 옵션'),
+          // ── 개발자 옵션 ──
+          const _SectionHeader(title: '개발자 옵션'),
           const SizedBox(height: 12),
           _SettingsCard(
             children: [
@@ -192,7 +204,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         }
                       },
                       icon: const Icon(Icons.science_outlined, color: AppColors.primary),
-                      label: const Text('테스트 데이터 전송', style: TextStyle(color: AppColors.primary, fontSize: 16)),
+                      label: const Text(
+                        '테스트 데이터 전송',
+                        style: TextStyle(color: AppColors.primary, fontSize: 16),
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppColors.primary),
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -206,13 +221,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 32),
 
-          // 앱 정보
           Center(
             child: Column(
               children: const [
-                Text('CodeAir v1.0.0', style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+                Text('CodeAir v1.0.0',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
                 SizedBox(height: 4),
-                Text('IoT 공기질 모니터링 대시보드', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                Text('IoT 공기질 모니터링 대시보드',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
               ],
             ),
           ),
@@ -229,6 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
+// ── 섹션 헤더 ──
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader({required this.title});
@@ -247,6 +264,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+// ── 설정 카드 ──
 class _SettingsCard extends StatelessWidget {
   final List<Widget> children;
   const _SettingsCard({required this.children});
@@ -256,7 +274,7 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
@@ -265,6 +283,7 @@ class _SettingsCard extends StatelessWidget {
   }
 }
 
+// ── 임계값 슬라이더 ──
 class _ThresholdSlider extends StatelessWidget {
   final String label;
   final double value;
@@ -320,6 +339,7 @@ class _ThresholdSlider extends StatelessWidget {
   }
 }
 
+// ── 공기질 기준 행 ──
 class _StandardRow extends StatelessWidget {
   final String label;
   final String good;
@@ -342,7 +362,9 @@ class _StandardRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.w600, fontSize: 15)),
+        Text(label,
+            style: const TextStyle(
+                color: AppColors.textDark, fontWeight: FontWeight.w600, fontSize: 15)),
         const SizedBox(height: 8),
         Row(
           children: [
