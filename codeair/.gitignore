@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 코딩 중 생성되는 문서 (PRD/SRS 등) — 커밋 제외
+/docs/
+
+# Firebase Hosting 배포 캐시
+.firebase/

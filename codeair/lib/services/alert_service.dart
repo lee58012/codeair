@@ -1,112 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/alert_model.dart';
-import '../models/sensor_data.dart';
 
+/// Firestore `alerts` 컬렉션 읽기/읽음 처리 전용 서비스.
+///
+/// 경보 '생성'은 Cloudflare Worker가 단일 소스로 담당한다
+/// (임계 초과 판정 + FCM 푸시 + Firestore 기록 + 5분 반복 쿨다운).
+/// 따라서 앱은 경보를 만들지 않고 구독·표시·읽음 처리만 한다.
 class AlertService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // 기본 경보 임계값 (사용자가 설정 미변경 시 사용)
+  // 설정 화면 슬라이더 기본값 (사용자가 임계값 미변경 시 표시용)
   static const double pm25WarningThreshold = 35.0;
   static const double pm10WarningThreshold = 80.0;
-  static const double tempHighWarning     = 33.0;
-  static const double tempLowWarning      = 0.0;
-  static const double humidityHighWarning = 60.0;
-  static const double humidityLowWarning  = 40.0;
-
-  /// 센서 데이터 분석 후 경보 생성
-  /// [pm25Threshold], [pm10Threshold]: 설정에서 저장된 사용자 임계값
-  Future<void> checkAndCreateAlerts(
-    SensorData data, {
-    double? pm25Threshold,
-    double? pm10Threshold,
-  }) async {
-    final double p25   = pm25Threshold ?? pm25WarningThreshold;
-    final double p10   = pm10Threshold ?? pm10WarningThreshold;
-    const double tHigh = tempHighWarning;
-    const double tLow  = tempLowWarning;
-    const double hHigh = humidityHighWarning;
-    const double hLow  = humidityLowWarning;
-
-    final List<AlertModel> alerts = [];
-
-    if (data.pm25 >= p25) {
-      alerts.add(_createAlert(
-        type: AlertType.pm25,
-        severity: AlertSeverity.warning,
-        value: data.pm25,
-        message: '초미세먼지(PM2.5) 기준 초과: ${data.pm25.toStringAsFixed(1)} µg/m³ (기준: ${p25.toStringAsFixed(0)})',
-        deviceId: data.deviceId,
-      ));
-    }
-
-    if (data.pm10 >= p10) {
-      alerts.add(_createAlert(
-        type: AlertType.pm10,
-        severity: AlertSeverity.warning,
-        value: data.pm10,
-        message: '미세먼지(PM10) 기준 초과: ${data.pm10.toStringAsFixed(1)} µg/m³ (기준: ${p10.toStringAsFixed(0)})',
-        deviceId: data.deviceId,
-      ));
-    }
-
-    if (data.temperature >= tHigh) {
-      alerts.add(_createAlert(
-        type: AlertType.temperature,
-        severity: AlertSeverity.warning,
-        value: data.temperature,
-        message: '고온 경보: ${data.temperature.toStringAsFixed(1)} °C (기준: ${tHigh.toStringAsFixed(0)}°C 이상)',
-        deviceId: data.deviceId,
-      ));
-    } else if (data.temperature <= tLow) {
-      alerts.add(_createAlert(
-        type: AlertType.temperature,
-        severity: AlertSeverity.warning,
-        value: data.temperature,
-        message: '저온 경보: ${data.temperature.toStringAsFixed(1)} °C (기준: ${tLow.toStringAsFixed(0)}°C 이하)',
-        deviceId: data.deviceId,
-      ));
-    }
-
-    if (data.humidity > hHigh) {
-      alerts.add(_createAlert(
-        type: AlertType.humidity,
-        severity: AlertSeverity.warning,
-        value: data.humidity,
-        message: '고습도 경보: ${data.humidity.toStringAsFixed(1)} % (기준: ${hHigh.toStringAsFixed(0)}% 초과)',
-        deviceId: data.deviceId,
-      ));
-    } else if (data.humidity < hLow) {
-      alerts.add(_createAlert(
-        type: AlertType.humidity,
-        severity: AlertSeverity.warning,
-        value: data.humidity,
-        message: '저습도 경보: ${data.humidity.toStringAsFixed(1)} % (기준: ${hLow.toStringAsFixed(0)}% 미만)',
-        deviceId: data.deviceId,
-      ));
-    }
-
-    for (final alert in alerts) {
-      await _firestore.collection('alerts').add(alert.toMap());
-    }
-  }
-
-  AlertModel _createAlert({
-    required AlertType type,
-    required AlertSeverity severity,
-    required double value,
-    required String message,
-    required String deviceId,
-  }) {
-    return AlertModel(
-      id: '',
-      type: type,
-      severity: severity,
-      value: value,
-      message: message,
-      timestamp: DateTime.now(),
-      deviceId: deviceId,
-    );
-  }
 
   Stream<List<AlertModel>> alertsStream({int limit = 50}) {
     return _firestore
@@ -127,6 +32,17 @@ class AlertService {
 
   Future<void> markAsRead(String alertId) async {
     await _firestore.collection('alerts').doc(alertId).update({'isRead': true});
+  }
+
+  /// 여러 경보를 한 번에 읽음 처리 (그룹 카드용)
+  Future<void> markManyAsRead(List<String> alertIds) async {
+    final ids = alertIds.where((id) => !id.startsWith('local_')).toList();
+    if (ids.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final id in ids) {
+      batch.update(_firestore.collection('alerts').doc(id), {'isRead': true});
+    }
+    await batch.commit();
   }
 
   Future<void> markAllAsRead() async {

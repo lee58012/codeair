@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sensor_data.dart';
@@ -7,7 +8,7 @@ import '../services/alert_service.dart';
 
 class SensorProvider extends ChangeNotifier {
   final SensorService _sensorService = SensorService();
-  final AlertService _alertService = AlertService();
+  final DatabaseReference _db = FirebaseDatabase.instance.ref();
 
   SensorData? _latestData;
   List<SensorData> _history = [];
@@ -42,12 +43,27 @@ class SensorProvider extends ChangeNotifier {
   }
 
   /// 설정 화면에서 저장 시 호출 — 즉시 반영
+  /// 로컬(SharedPreferences) + Firebase(config/thresholds) 양쪽에 저장.
+  /// Firebase 저장본은 Cloudflare Worker가 읽어 FCM 경보 판단에 사용.
   Future<void> updateThresholds(double pm25, double pm10) async {
     pm25Threshold = pm25;
     pm10Threshold = pm10;
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('pm25Threshold', pm25);
     await prefs.setDouble('pm10Threshold', pm10);
+
+    // Cloudflare Worker가 읽을 수 있도록 Firebase에도 저장
+    try {
+      await _db.child('config/thresholds').set({
+        'pm25': pm25,
+        'pm10': pm10,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (e) {
+      debugPrint('[Threshold] Firebase 저장 실패: $e');
+    }
+
     notifyListeners();
   }
 
@@ -65,14 +81,10 @@ class SensorProvider extends ChangeNotifier {
       _isLoading = false;
       _error = '';
 
-      // 경보 체크 — 현재 임계값 전달
-      if (data != null) {
-        await _alertService.checkAndCreateAlerts(
-          data,
-          pm25Threshold: pm25Threshold,
-          pm10Threshold: pm10Threshold,
-        );
-      }
+      // 경보 생성은 Cloudflare Worker가 단일 소스로 처리한다.
+      // (임계 초과 시 Worker가 FCM 푸시 + Firestore 경보 기록을 함께 수행하며,
+      //  첫 초과 후 5분 반복 / 정상 복귀 시 리셋 쿨다운을 적용)
+      // 앱은 Firestore 경보 스트림을 구독해 표시만 한다.
 
       notifyListeners();
     }, onError: (e) {
@@ -94,8 +106,9 @@ class SensorProvider extends ChangeNotifier {
     _startListening();
   }
 
-  Future<void> sendDummyData() async {
-    await _sensorService.pushDummyData(_deviceId);
+  /// 당겨서 새로고침 — 실시간 스트림을 재구독해 최신 상태로 재동기화
+  Future<void> refresh() async {
+    _startListening();
   }
 
   @override

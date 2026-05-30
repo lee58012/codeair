@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/sensor_provider.dart';
 import 'providers/alert_provider.dart';
+import 'services/notification_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/alerts_screen.dart';
 import 'screens/settings_screen.dart';
@@ -25,6 +27,12 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // FCM 백그라운드 메시지 핸들러 등록
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // 알림 서비스 초기화 (권한/토큰은 설정에서 켤 때 등록)
+  await NotificationService.instance.initialize();
 
   runApp(const CodeAirApp());
 }
