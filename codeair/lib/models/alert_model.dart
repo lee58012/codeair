@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum AlertType { pm25, pm10, temperature, humidity }
-enum AlertSeverity { warning, danger }
+enum AlertType { pm25, pm10, temperature, humidity, co2, system }
+enum AlertSeverity { info, warning, danger, push }
 
 class AlertModel {
   final String id;
@@ -24,6 +24,25 @@ class AlertModel {
     this.isRead = false,
   });
 
+  /// 로컬 시스템 이벤트용 팩토리 (자동 읽음 처리)
+  factory AlertModel.local({
+    required AlertSeverity severity,
+    required String message,
+    AlertType type = AlertType.system,
+    double value = 0,
+    String deviceId = 'system',
+  }) =>
+      AlertModel(
+        id: 'local_${DateTime.now().microsecondsSinceEpoch}',
+        type: type,
+        severity: severity,
+        value: value,
+        message: message,
+        timestamp: DateTime.now(),
+        deviceId: deviceId,
+        isRead: true,
+      );
+
   factory AlertModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return AlertModel(
@@ -44,28 +63,24 @@ class AlertModel {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'type': type.name,
-      'severity': severity.name,
-      'value': value,
-      'message': message,
-      'timestamp': Timestamp.fromDate(timestamp),
-      'deviceId': deviceId,
-      'isRead': isRead,
-    };
-  }
+  Map<String, dynamic> toMap() => {
+    'type': type.name,
+    'severity': severity.name,
+    'value': value,
+    'message': message,
+    'timestamp': Timestamp.fromDate(timestamp),
+    'deviceId': deviceId,
+    'isRead': isRead,
+  };
 
   String get typeLabel {
     switch (type) {
-      case AlertType.pm25:
-        return '초미세먼지(PM2.5)';
-      case AlertType.pm10:
-        return '미세먼지(PM10)';
-      case AlertType.temperature:
-        return '온도';
-      case AlertType.humidity:
-        return '습도';
+      case AlertType.pm25:        return '초미세먼지(PM2.5)';
+      case AlertType.pm10:        return '미세먼지(PM10)';
+      case AlertType.temperature: return '온도';
+      case AlertType.humidity:    return '습도';
+      case AlertType.co2:         return '이산화탄소(CO₂)';
+      case AlertType.system:      return '시스템';
     }
   }
 }

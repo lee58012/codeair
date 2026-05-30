@@ -11,9 +11,12 @@ plugins {
 android {
     namespace = "com.codeair.codeair"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Firebase 플러그인들이 NDK 27 요구 (설치돼 있음) — 기본값(26.3) 대신 명시
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
+        // flutter_local_notifications 17+ 요구: core library desugaring
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -27,7 +30,8 @@ android {
         applicationId = "com.codeair.codeair"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // FCM/flutter_local_notifications 호환을 위해 minSdk 21 보장
+        minSdk = maxOf(flutter.minSdkVersion, 21)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -40,6 +44,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.2")
 }
 
 flutter {

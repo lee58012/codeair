@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import '../models/sensor_data.dart';
 
@@ -6,14 +5,18 @@ class SensorService {
   final DatabaseReference _db = FirebaseDatabase.instance.ref();
 
   /// 최신 센서 데이터 실시간 스트림
+  /// IoT가 `sensors/latest` 경로에 자동 갱신 → 거기를 구독
   Stream<SensorData?> latestSensorStream(String deviceId) {
     return _db
-        .child('devices/$deviceId/latest')
+        .child('sensors/latest')
         .onValue
         .map((event) {
       if (event.snapshot.value == null) return null;
       final map = event.snapshot.value as Map<dynamic, dynamic>;
-      return SensorData.fromMap(map, event.snapshot.key ?? 'unknown');
+      // IoT가 deviceId를 안 보내므로 직접 주입
+      final enriched = Map<dynamic, dynamic>.from(map);
+      enriched['deviceId'] = deviceId;
+      return SensorData.fromMap(enriched, event.snapshot.key ?? 'latest');
     });
   }
 
@@ -52,21 +55,5 @@ class SensorService {
           .toList()
         ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
     });
-  }
-
-  /// 테스트용 더미 데이터 전송
-  Future<void> pushDummyData(String deviceId) async {
-    final rng = Random();
-    final now = DateTime.now();
-    final data = {
-      'pm25':        double.parse((rng.nextDouble() * 90).toStringAsFixed(1)),        // 0 ~ 90
-      'pm10':        double.parse((rng.nextDouble() * 170).toStringAsFixed(1)),       // 0 ~ 170
-      'temperature': double.parse((-10 + rng.nextDouble() * 48).toStringAsFixed(1)), // -10 ~ 38
-      'humidity':    double.parse((30 + rng.nextDouble() * 40).toStringAsFixed(1)),   // 30 ~ 70
-      'timestamp': now.millisecondsSinceEpoch,
-      'deviceId': deviceId,
-    };
-    await _db.child('devices/$deviceId/latest').set(data);
-    await _db.child('devices/$deviceId/history').push().set(data);
   }
 }

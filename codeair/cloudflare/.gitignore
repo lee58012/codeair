@@ -1,0 +1,5 @@
+# 비밀값 — 절대 커밋 금지
+secrets.json
+.dev.vars
+.wrangler/
+node_modules/

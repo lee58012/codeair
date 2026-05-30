@@ -1,0 +1,15 @@
+name = "codeair-fcm-worker"
+main = "src/worker.js"
+compatibility_date = "2024-09-01"
+
+# 비밀값은 wrangler secret put 으로 등록 (아래 README 참고)
+# - FB_PROJECT_ID
+# - FB_CLIENT_EMAIL
+# - FB_PRIVATE_KEY
+# - FB_DATABASE_URL
+# - SHARED_SECRET (선택)
+
+# 참고: 이 Worker는 IoT의 HTTP 호출로 동작합니다.
+# 주기적 폴링이 필요하면 아래 Cron 트리거를 활성화하세요.
+# [triggers]
+# crons = ["*/1 * * * *"]

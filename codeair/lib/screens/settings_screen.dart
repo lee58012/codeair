@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/sensor_provider.dart';
 import '../constants/app_colors.dart';
 import '../services/alert_service.dart';
+import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,10 +14,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _deviceIdController = TextEditingController();
   double _pm25Threshold = AlertService.pm25WarningThreshold;
   double _pm10Threshold = AlertService.pm10WarningThreshold;
-  bool _notificationsEnabled = true;
+  bool _notificationsEnabled = false;
 
   @override
   void initState() {
@@ -27,23 +27,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _deviceIdController.text = prefs.getString('deviceId') ?? 'device_001';
       _pm25Threshold = prefs.getDouble('pm25Threshold') ?? AlertService.pm25WarningThreshold;
       _pm10Threshold = prefs.getDouble('pm10Threshold') ?? AlertService.pm10WarningThreshold;
-      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
+      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? false;
     });
+  }
+
+  Future<void> _toggleNotifications(bool value) async {
+    if (value) {
+      final granted = await NotificationService.instance.enable();
+      if (!mounted) return;
+      setState(() => _notificationsEnabled = granted);
+      if (!granted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('알림 권한이 거부되었습니다. 기기 설정에서 허용해주세요.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    } else {
+      await NotificationService.instance.disable();
+      if (!mounted) return;
+      setState(() => _notificationsEnabled = false);
+    }
   }
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('deviceId', _deviceIdController.text);
     await prefs.setDouble('pm25Threshold', _pm25Threshold);
     await prefs.setDouble('pm10Threshold', _pm10Threshold);
-    await prefs.setBool('notificationsEnabled', _notificationsEnabled);
 
     if (!mounted) return;
     final provider = context.read<SensorProvider>();
-    provider.changeDevice(_deviceIdController.text);
     await provider.updateThresholds(_pm25Threshold, _pm10Threshold);
     if (mounted) Navigator.pop(context);
   }
@@ -55,9 +71,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
+        elevation: 0,
         title: const Text(
           '설정',
-          style: TextStyle(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: AppColors.textDark,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.2,
+          ),
         ),
         iconTheme: const IconThemeData(color: AppColors.textDark),
         bottom: const PreferredSize(
@@ -65,339 +87,267 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Divider(height: 1, color: AppColors.border),
         ),
         actions: [
-          TextButton(
-            onPressed: _saveSettings,
-            child: const Text(
-              '저장',
-              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton(
+              onPressed: _saveSettings,
+              style: TextButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              child: const Text('저장'),
             ),
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
         children: [
-          // ── 기기 설정 ──
-          const _SectionHeader(title: '기기 설정'),
-          const SizedBox(height: 12),
-          _SettingsCard(
-            children: [
-              TextField(
-                controller: _deviceIdController,
-                style: const TextStyle(color: AppColors.textDark),
-                decoration: InputDecoration(
-                  labelText: '기기 ID',
-                  labelStyle: const TextStyle(color: AppColors.textMuted),
-                  hintText: 'device_001',
-                  hintStyle: const TextStyle(color: AppColors.textMuted),
-                  prefixIcon: const Icon(Icons.device_hub, color: AppColors.primary),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.background,
-                ),
-              ),
-            ],
+          // ── 섹션 헤더 ──
+          const Text(
+            'ALERT SETTINGS',
+            style: TextStyle(
+              fontSize: 10,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w800,
+              letterSpacing: 2.2,
+              color: AppColors.textLight,
+            ),
           ),
-
+          const SizedBox(height: 6),
+          const Text(
+            '경보 설정',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '푸시 알림 수신 여부 및 센서별 경보 임계값을 설정합니다.',
+            style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+          ),
           const SizedBox(height: 20),
 
-          // ── 경보 설정 ──
-          const _SectionHeader(title: '경보 설정'),
-          const SizedBox(height: 12),
-          _SettingsCard(
+          // ── 푸시 알림 토글 카드 ──
+          _card(
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.notifications_outlined, color: AppColors.primary, size: 20),
-                      SizedBox(width: 10),
-                      Text('푸시 알림', style: TextStyle(color: AppColors.textDark, fontSize: 17)),
-                    ],
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '푸시 알림',
+                          style: TextStyle(
+                            color: AppColors.textDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          '임계값 초과 시 기기로 알림 전송',
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   Switch(
                     value: _notificationsEnabled,
-                    onChanged: (v) => setState(() => _notificationsEnabled = v),
+                    onChanged: _toggleNotifications,
                     activeColor: AppColors.primary,
                   ),
                 ],
               ),
-              const Divider(color: AppColors.border, height: 24),
-              _ThresholdSlider(
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── 임계값 슬라이더 카드 ──
+          _card(
+            children: [
+              // PM2.5
+              _buildSliderRow(
                 label: 'PM2.5 경보 기준',
+                code: 'PM2.5',
+                unit: 'µg/m³',
                 value: _pm25Threshold,
                 min: 10,
                 max: 100,
-                unit: 'µg/m³',
                 color: AppColors.pm25Color,
                 onChanged: (v) => setState(() => _pm25Threshold = v),
               ),
-              const SizedBox(height: 16),
-              _ThresholdSlider(
+              const SizedBox(height: 20),
+              const Divider(color: AppColors.border, height: 1),
+              const SizedBox(height: 20),
+              // PM10
+              _buildSliderRow(
                 label: 'PM10 경보 기준',
+                code: 'PM10',
+                unit: 'µg/m³',
                 value: _pm10Threshold,
                 min: 20,
                 max: 200,
-                unit: 'µg/m³',
                 color: AppColors.pm10Color,
                 onChanged: (v) => setState(() => _pm10Threshold = v),
               ),
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 40),
 
-          // ── 공기질 기준 안내 ──
-          const _SectionHeader(title: '공기질 기준 (국내 기준)'),
-          const SizedBox(height: 12),
-          _SettingsCard(
-            children: [
-              _StandardRow(
-                label: 'PM2.5',
-                good: '0~15',
-                moderate: '16~35',
-                bad: '36~75',
-                veryBad: '76+',
-                unit: 'µg/m³',
-              ),
-              const Divider(color: AppColors.border, height: 20),
-              _StandardRow(
-                label: 'PM10',
-                good: '0~30',
-                moderate: '31~80',
-                bad: '81~150',
-                veryBad: '151+',
-                unit: 'µg/m³',
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // ── 개발자 옵션 ──
-          const _SectionHeader(title: '개발자 옵션'),
-          const SizedBox(height: 12),
-          _SettingsCard(
-            children: [
-              Consumer<SensorProvider>(
-                builder: (context, provider, _) {
-                  return SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        await provider.sendDummyData();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('테스트 데이터 전송됨'),
-                              backgroundColor: AppColors.primary,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.science_outlined, color: AppColors.primary),
-                      label: const Text(
-                        '테스트 데이터 전송',
-                        style: TextStyle(color: AppColors.primary, fontSize: 16),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 32),
-
-          Center(
+          // ── 하단 버전 표시 ──
+          const Center(
             child: Column(
-              children: const [
-                Text('CodeAir v1.0.0',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+              children: [
+                Text(
+                  'CodeAir v1.0.0',
+                  style: TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                  ),
+                ),
                 SizedBox(height: 4),
-                Text('IoT 공기질 모니터링 대시보드',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                Text(
+                  'IoT 공기질 모니터링 대시보드',
+                  style: TextStyle(
+                    color: AppColors.textLight,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _deviceIdController.dispose();
-    super.dispose();
-  }
-}
+  Widget _card({required List<Widget> children}) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
+      );
 
-// ── 섹션 헤더 ──
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: AppColors.textMuted,
-        fontSize: 15,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
-// ── 설정 카드 ──
-class _SettingsCard extends StatelessWidget {
-  final List<Widget> children;
-  const _SettingsCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
-    );
-  }
-}
-
-// ── 임계값 슬라이더 ──
-class _ThresholdSlider extends StatelessWidget {
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final String unit;
-  final Color color;
-  final ValueChanged<double> onChanged;
-
-  const _ThresholdSlider({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.unit,
-    required this.color,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSliderRow({
+    required String label,
+    required String code,
+    required String unit,
+    required double value,
+    required double min,
+    required double max,
+    required Color color,
+    required ValueChanged<double> onChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: AppColors.textDark, fontSize: 16)),
+            Text(
+              code,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.6,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 '${value.toStringAsFixed(0)} $unit',
-                style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 15),
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                ),
               ),
             ),
           ],
         ),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: ((max - min) / 5).toInt(),
-          activeColor: color,
-          inactiveColor: color.withValues(alpha: 0.2),
-          onChanged: onChanged,
+        const SizedBox(height: 4),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 3,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+          ),
+          child: Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: ((max - min) / 5).toInt(),
+            activeColor: color,
+            inactiveColor: color.withValues(alpha: 0.15),
+            onChanged: onChanged,
+          ),
         ),
-      ],
-    );
-  }
-}
-
-// ── 공기질 기준 행 ──
-class _StandardRow extends StatelessWidget {
-  final String label;
-  final String good;
-  final String moderate;
-  final String bad;
-  final String veryBad;
-  final String unit;
-
-  const _StandardRow({
-    required this.label,
-    required this.good,
-    required this.moderate,
-    required this.bad,
-    required this.veryBad,
-    required this.unit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                color: AppColors.textDark, fontWeight: FontWeight.w600, fontSize: 15)),
-        const SizedBox(height: 8),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _chip('좋음 $good', AppColors.success),
-            const SizedBox(width: 6),
-            _chip('보통 $moderate', AppColors.warning),
-            const SizedBox(width: 6),
-            _chip('나쁨 $bad', AppColors.danger),
-            const SizedBox(width: 6),
-            _chip('매우나쁨 $veryBad $unit', AppColors.danger),
+            Text(min.toStringAsFixed(0),
+                style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontFamily: 'monospace')),
+            Text('${max.toStringAsFixed(0)} $unit',
+                style: const TextStyle(fontSize: 11, color: AppColors.textLight, fontFamily: 'monospace')),
           ],
         ),
       ],
-    );
-  }
-
-  Widget _chip(String text, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(color: color, fontSize: 13),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
     );
   }
 }

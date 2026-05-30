@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/sensor_data.dart';
 import '../constants/app_colors.dart';
 
-/// 디자인 참고: code-air AirChart
-/// 흰 카드, 에어리어 차트, 그라디언트 fill
+/// 디자인 참고: code-air ChartCard (미니멀 스파크라인)
+/// 흰 카드 + 제목(좌) + 현재값(우) + 스파크라인 + 그라디언트 fill
 class AirChart extends StatelessWidget {
   final List<SensorData> history;
   final String metric; // 'pm25' | 'pm10' | 'temperature' | 'humidity'
@@ -26,6 +26,7 @@ class AirChart extends StatelessWidget {
       case 'pm10':        return d.pm10;
       case 'temperature': return d.temperature;
       case 'humidity':    return d.humidity;
+      case 'co2':         return d.co2;
       default:            return 0;
     }
   }
@@ -36,86 +37,114 @@ class AirChart extends StatelessWidget {
       return FlSpot(e.key.toDouble(), _getValue(e.value));
     }).toList();
 
+    final current = history.isNotEmpty ? _getValue(history.last) : 0.0;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              '$title History',
-              style: const TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
+          // 상단: 제목 (좌) + 현재값 (우)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Text(
+                current.toStringAsFixed(1),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 140,
-            child: history.isEmpty
-                ? const Center(
+          const SizedBox(height: 8),
+          // 스파크라인
+          Expanded(
+            child: history.length < 2
+                ? Center(
                     child: Text(
-                      '데이터 없음',
-                      style: TextStyle(color: AppColors.textLight, fontSize: 12),
+                      history.isEmpty ? '데이터 없음' : '--',
+                      style: const TextStyle(color: AppColors.textLight, fontSize: 11),
                     ),
                   )
                 : LineChart(
                     LineChartData(
-                      gridData: FlGridData(
-                        show: true,
-                        drawVerticalLine: false,
-                        horizontalInterval: _interval(),
-                        getDrawingHorizontalLine: (_) => const FlLine(
-                          color: Color(0xFFF1F5F9),
-                          strokeWidth: 1,
-                        ),
-                      ),
-                      titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 36,
-                            getTitlesWidget: (v, _) => Text(
-                              v.toStringAsFixed(0),
-                              style: const TextStyle(
-                                color: AppColors.textLight,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                        bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles:    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles:  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      ),
+                      gridData: const FlGridData(show: false),
+                      titlesData: const FlTitlesData(show: false),
                       borderData: FlBorderData(show: false),
+                      lineTouchData: LineTouchData(
+                        enabled: true,
+                        handleBuiltInTouches: true,
+                        touchTooltipData: LineTouchTooltipData(
+                          getTooltipColor: (_) => AppColors.textDark,
+                          tooltipRoundedRadius: 8,
+                          tooltipPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                            final idx = spot.x.toInt();
+                            final time = idx >= 0 && idx < history.length
+                                ? DateFormat('HH:mm:ss').format(history[idx].timestamp)
+                                : '';
+                            return LineTooltipItem(
+                              '$time\n${spot.y.toStringAsFixed(1)}',
+                              TextStyle(
+                                color: color,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                height: 1.4,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        getTouchedSpotIndicator: (barData, spotIndexes) {
+                          return spotIndexes.map((_) {
+                            return TouchedSpotIndicatorData(
+                              FlLine(
+                                color: color.withValues(alpha: 0.3),
+                                strokeWidth: 1,
+                                dashArray: [4, 4],
+                              ),
+                              FlDotData(
+                                show: true,
+                                getDotPainter: (spot, percent, bar, index) =>
+                                    FlDotCirclePainter(
+                                  radius: 4,
+                                  color: color,
+                                  strokeColor: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
                       lineBarsData: [
                         LineChartBarData(
                           spots: spots,
                           isCurved: true,
+                          curveSmoothness: 0.25,
                           color: color,
-                          barWidth: 3,
+                          barWidth: 2,
                           dotData: const FlDotData(show: false),
                           belowBarData: BarAreaData(
                             show: true,
@@ -130,37 +159,11 @@ class AirChart extends StatelessWidget {
                           ),
                         ),
                       ],
-                      lineTouchData: LineTouchData(
-                        touchTooltipData: LineTouchTooltipData(
-                          getTooltipColor: (_) => AppColors.textDark,
-                          tooltipRoundedRadius: 8,
-                          getTooltipItems: (spots) => spots.map((s) {
-                            final idx = s.x.toInt();
-                            final time = idx < history.length
-                                ? DateFormat('HH:mm').format(history[idx].timestamp)
-                                : '';
-                            return LineTooltipItem(
-                              '$time\n${s.y.toStringAsFixed(1)}',
-                              TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
-                            );
-                          }).toList(),
-                        ),
-                      ),
                     ),
                   ),
           ),
         ],
       ),
     );
-  }
-
-  double _interval() {
-    if (history.isEmpty) return 10;
-    final vals = history.map(_getValue).toList();
-    final max = vals.reduce((a, b) => a > b ? a : b);
-    if (max <= 10)  return 2;
-    if (max <= 50)  return 10;
-    if (max <= 100) return 20;
-    return 50;
   }
 }

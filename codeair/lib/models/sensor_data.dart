@@ -4,6 +4,7 @@ class SensorData {
   final double pm10;
   final double temperature;
   final double humidity;
+  final double co2;
   final DateTime timestamp;
   final String deviceId;
 
@@ -13,71 +14,48 @@ class SensorData {
     required this.pm10,
     required this.temperature,
     required this.humidity,
+    this.co2 = 0,
     required this.timestamp,
     required this.deviceId,
   });
 
   factory SensorData.fromMap(Map<dynamic, dynamic> map, String id) {
+    DateTime parseTimestamp(dynamic ts) {
+      if (ts == null) return DateTime.now();
+      if (ts is int) {
+        return ts < 100000000000
+            ? DateTime.fromMillisecondsSinceEpoch(ts * 1000)
+            : DateTime.fromMillisecondsSinceEpoch(ts);
+      }
+      if (ts is String) return DateTime.tryParse(ts) ?? DateTime.now();
+      return DateTime.now();
+    }
+
+    double toDouble(dynamic v) {
+      if (v == null) return 0;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0;
+    }
+
     return SensorData(
       id: id,
-      pm25: (map['pm25'] ?? 0).toDouble(),
-      pm10: (map['pm10'] ?? 0).toDouble(),
-      temperature: (map['temperature'] ?? 0).toDouble(),
-      humidity: (map['humidity'] ?? 0).toDouble(),
-      timestamp: map['timestamp'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'])
-          : DateTime.now(),
-      deviceId: map['deviceId'] ?? 'unknown',
+      pm25: toDouble(map['pm25']),
+      pm10: toDouble(map['pm10']),
+      temperature: toDouble(map['temperature']),
+      humidity: toDouble(map['humidity']),
+      co2: toDouble(map['co2_ppm'] ?? map['co2']),
+      timestamp: parseTimestamp(map['timestamp']),
+      deviceId: (map['deviceId'] ?? 'unknown').toString(),
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'pm25': pm25,
-      'pm10': pm10,
-      'temperature': temperature,
-      'humidity': humidity,
-      'timestamp': timestamp.millisecondsSinceEpoch,
-      'deviceId': deviceId,
-    };
-  }
-
-  /// 미세먼지(PM2.5) 등급
-  AirQualityLevel get pm25Level {
-    if (pm25 <= 15) return AirQualityLevel.good;
-    if (pm25 <= 35) return AirQualityLevel.moderate;
-    if (pm25 <= 75) return AirQualityLevel.bad;
-    return AirQualityLevel.veryBad;
-  }
-
-  /// 미세먼지(PM10) 등급
-  AirQualityLevel get pm10Level {
-    if (pm10 <= 30) return AirQualityLevel.good;
-    if (pm10 <= 80) return AirQualityLevel.moderate;
-    if (pm10 <= 150) return AirQualityLevel.bad;
-    return AirQualityLevel.veryBad;
-  }
-
-  /// 온도 상태
-  TemperatureLevel get temperatureLevel {
-    if (temperature < 0) return TemperatureLevel.cold;
-    if (temperature <= 18) return TemperatureLevel.cool;
-    if (temperature <= 26) return TemperatureLevel.comfortable;
-    if (temperature <= 33) return TemperatureLevel.warm;
-    return TemperatureLevel.hot;
-  }
-
-  /// 습도 상태
-  HumidityLevel get humidityLevel {
-    if (humidity < 40) return HumidityLevel.dry;
-    if (humidity <= 60) return HumidityLevel.comfortable;
-    return HumidityLevel.humid;
-  }
-
+  Map<String, dynamic> toMap() => {
+    'pm25': pm25,
+    'pm10': pm10,
+    'temperature': temperature,
+    'humidity': humidity,
+    'co2_ppm': co2,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'deviceId': deviceId,
+  };
 }
-
-enum AirQualityLevel { good, moderate, bad, veryBad }
-
-enum TemperatureLevel { cold, cool, comfortable, warm, hot }
-
-enum HumidityLevel { dry, comfortable, humid }
